@@ -7,7 +7,6 @@ from google import genai
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
-# -------- RICH --------
 from rich.console import Console
 from rich.table import Table
 from rich.syntax import Syntax
@@ -16,7 +15,6 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 
 console = Console(width=120)
 
-# -------- API KEYS --------
 API_KEYS = [
     "API_KEY1",
     "API_KEY2",
@@ -24,7 +22,6 @@ API_KEYS = [
     "API_KEY4"
 ]
 
-# -------- KEY MANAGER --------
 class KeyManager:
     def __init__(self, keys):
         self.keys = keys
@@ -43,11 +40,9 @@ class KeyManager:
 
 key_manager = KeyManager(API_KEYS)
 
-# -------- DIRECTORIES --------
 os.makedirs("reports", exist_ok=True)
 os.makedirs("optimized_files", exist_ok=True)
 
-# -------- PDF --------
 class PDFReport(FPDF):
     def header(self):
         self.set_font("Helvetica", "B", 14)
@@ -60,16 +55,13 @@ class PDFReport(FPDF):
         )
         self.ln(5)
 
-# -------- HELPERS --------
 def sanitize_llm_code(text):
-    """Remove markdown fences and language hints"""
     lines = [l for l in text.splitlines() if not l.strip().startswith("```")]
     if lines and lines[0].strip().lower() in ("python", "c", "c++", "java"):
         lines = lines[1:]
     return "\n".join(lines).strip()
 
 def cyclomatic_complexity(code):
-    """Compute Python code complexity; fallback '-' for others"""
     try:
         tree = ast.parse(code)
         visitor = mccabe.PathGraphingAstVisitor()
@@ -79,14 +71,12 @@ def cyclomatic_complexity(code):
         return "-"
 
 def safe_exec_time(code):
-    """Return execution time for Python, '-' for others"""
     try:
         return timeit.timeit(lambda: exec(code, {}), number=3)
     except:
         return "-"
 
 def fix_java_class_name(code, filename):
-    """Ensure Java class name matches filename"""
     class_name = os.path.splitext(filename)[0]
     import re
     code = re.sub(r'public\s+class\s+\w+', f'public class {class_name}', code)
@@ -112,7 +102,6 @@ def print_comparison(old, new, fname, lang="python"):
 
     console.print(table)
 
-# -------- MAIN --------
 def run():
     SKIP_FILES = [os.path.basename(__file__)]
     files = sorted(
@@ -140,7 +129,6 @@ def run():
             processed_files += 1
             progress.update(task, description=f"{fname}")
 
-            # Java: keep same filename; Others: add opt_ prefix
             if fname.endswith(".java"):
                 opt_path = f"optimized_files/{fname}"
             else:
@@ -161,7 +149,12 @@ def run():
             with open(fname, "r", encoding="utf-8") as f:
                 old_code = f.read()
 
-            lang = "python" if fname.endswith(".py") else "c" if fname.endswith(".c") else "cpp" if fname.endswith(".cpp") else "java"
+            lang = (
+                "python" if fname.endswith(".py")
+                else "c" if fname.endswith(".c")
+                else "cpp" if fname.endswith(".cpp")
+                else "java"
+            )
 
             while True:
                 try:
@@ -177,7 +170,6 @@ def run():
 
                     new_code = sanitize_llm_code(response.text)
 
-                    # Fix Java class name if needed
                     if lang == "java":
                         new_code = fix_java_class_name(new_code, fname)
 
@@ -230,7 +222,6 @@ def run():
             progress.advance(task)
             time.sleep(0.1)
 
-    # PDF generation only if at least one file optimized
     if pdf_created:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         pdf_file = f"reports/Optimization_Report_{timestamp}.pdf"
@@ -253,4 +244,4 @@ def run():
     )
 
 if __name__ == "__main__":
-    run()  
+    run()
