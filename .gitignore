@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+reports/
+optimized_files/
+.DS_Store
+Thumbs.db
+*.pyc
+*.pyo
+*.pyd
+.env
+reports/
+optimized_files/
+.DS_Store
+Thumbs.db
